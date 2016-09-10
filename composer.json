@@ -1,0 +1,22 @@
+{
+    "name": "pfinal/routing",
+    "description": "The PFinal Routing package.",
+    "license": "MIT",
+    "homepage": "http://www.pfinal.cn",
+    "authors": [
+        {
+            "name": "Zou Yiliang"
+        }
+    ],
+    "require": {
+        "php": ">=5.3",
+        "pfinal/pipeline": ">1.0",
+        "pfinal/container": ">1.0",
+        "symfony/http-foundation": ">2.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "PFinal\\Routing\\": "src/"
+        }
+    }
+}
