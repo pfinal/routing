@@ -15,6 +15,11 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class Router
 {
+    const AT = '@';
+    const HANDLER = '#';
+    const SEPARATOR = '/';
+    const PARAMETER = ':';
+
     /**
      * @var \PFinal\Container\Container
      */
@@ -22,10 +27,10 @@ class Router
 
     protected $tree = array();
 
-    const AT = '@';
-    const HANDLER = '#';
-    const SEPARATOR = '/';
-    const PARAMETER = ':';
+    protected $groupStack = array(
+        //array('middleware' => 'auth'),
+        //array('middleware' => array('cors','csrf')),
+    );
 
     /**
      * Router constructor.
@@ -46,8 +51,16 @@ class Router
      */
     public function add($method, $path, $callback, $middleware = array())
     {
+        $middleware = (array)$middleware;
+        foreach ($this->groupStack as $attribute) {
+            if (array_key_exists('middleware', $attribute)) {
+                $middleware = array_merge((array)$attribute['middleware'], $middleware); // groupStack 优先
+            }
+        }
+        $middleware = array_unique($middleware);
+
         $tokens = explode(self::SEPARATOR, str_replace('.', self::SEPARATOR, trim($path, self::SEPARATOR)));
-        $this->_add($this->tree, $tokens, $callback, (array)$middleware, array_map('strtoupper', (array)$method));
+        $this->_add($this->tree, $tokens, $callback, $middleware, array_map('strtoupper', (array)$method));
         return $this;
     }
 
@@ -83,7 +96,7 @@ class Router
         $token = array_shift($tokens);
 
         if ($token === null && array_key_exists(self::HANDLER, $node)) {
-            return $node[self::HANDLER] + array('arguments' => $params);
+            return array_merge($node[self::HANDLER], array('arguments' => $params));
         }
 
         if (array_key_exists($token, $node)) {
@@ -93,7 +106,7 @@ class Router
         foreach ($node[self::PARAMETER] as $childToken => $childNode) {
 
             if ($token === null && array_key_exists(self::HANDLER, $childNode)) {
-                return $childNode[self::HANDLER] + array('arguments' => $params);
+                return array_merge($childNode[self::HANDLER], array('arguments' => $params));
             }
 
             $handler = $this->_resolve($childNode, $tokens, array_merge($params, array($childToken => $token)));
@@ -111,20 +124,24 @@ class Router
         return $this->_resolve($this->tree, $tokens);
     }
 
-    //查找handler并带参数执行
+    /**
+     * 将请求转换为响应
+     *
+     * @param Request $request
+     * @return mixed|Response
+     */
     public function dispatch(Request $request)
     {
         $handler = $this->resolve($request->getPathInfo());
         if ($handler === false) {
-            throw new ResourceNotFoundException('请求的页面不存在');
+            throw new ResourceNotFoundException('Resource not found');
         }
 
         // callback、middleware、method、arguments
         extract($handler);
 
         if (!in_array($request->getMethod(), $method) && !in_array('ANY', $method)) {
-            throw new MethodNotAllowedException($method, sprintf('不允许"%s"方式访问', $request->getMethod()));
-
+            throw new MethodNotAllowedException($method, sprintf('Method not allowed', $request->getMethod()));
         }
 
         if (is_string($callback)) {
@@ -133,15 +150,22 @@ class Router
         }
 
         $pipeline = new Pipeline($this->container);
-        return $pipeline->send($request)->through($middleware)->then(function (Request $request) use ($callback, $arguments) {
-            $response = call_user_func_array($callback, $this->getArguments($callback, $arguments));
-            if ($response instanceof Response) {
-                return $response;
-            }
-            return new Response((string)$response);
+        $response = $pipeline->send($request)->through($middleware)->then(function (Request $request) use ($callback, $arguments) {
+            return call_user_func_array($callback, $this->getArguments($callback, $arguments));
         });
+
+        if ($response instanceof Response) {
+            return $response;
+        }
+        return new Response((string)$response);
     }
 
+    /**
+     * 获取调用参数和值
+     * @param $controller
+     * @param $attributes
+     * @return array
+     */
     protected function getArguments($controller, $attributes)
     {
         if (is_array($controller)) {
@@ -170,12 +194,31 @@ class Router
         return $arguments;
     }
 
+    /**
+     * 路由组
+     *
+     * $router->group(['middleware' => ['auth', 'cors']], function () use ($router) {
+     *     $router->get('/users', function () {
+     *         return 'users';
+     *     });
+     * });
+     *
+     * @param array $attributes
+     * @param \Closure $callback
+     */
+    public function group(array $attributes, \Closure $callback)
+    {
+        $this->groupStack[] = $attributes;
+        $callback();
+        array_pop($this->groupStack);
+    }
+
     public function __call($name, $args)
     {
         if (in_array($name, array('get', 'post', 'put', 'patch', 'delete', 'trace', 'connect', 'options', 'head', 'any'))) {
             array_unshift($args, $name);
             return call_user_func_array(array($this, 'add'), $args);
         }
-        throw new \Exception(sprintf('调用的方法不存在%s::%s()', __CLASS__, $name));
+        throw new \Exception('Call to undefined method ' . __CLASS__ . '::' . $name . '()');
     }
 }
