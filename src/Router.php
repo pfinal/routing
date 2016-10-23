@@ -151,6 +151,7 @@ class Router
 
         $pipeline = new Pipeline($this->container);
         $response = $pipeline->send($request)->through($middleware)->then(function (Request $request) use ($callback, $arguments) {
+            //$this->getArguments php >= 5.4
             return call_user_func_array($callback, $this->getArguments($callback, $arguments));
         });
 
