@@ -214,6 +214,16 @@ class Router
         array_pop($this->groupStack);
     }
 
+    public function getNodeData()
+    {
+        return $this->tree;
+    }
+
+    public function setNodeData(array $tree)
+    {
+        $this->tree = $tree;
+    }
+
     public function __call($name, $args)
     {
         if (in_array($name, array('get', 'post', 'put', 'patch', 'delete', 'trace', 'connect', 'options', 'head', 'any'))) {
