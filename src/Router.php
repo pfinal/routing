@@ -10,6 +10,18 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * 路由
+ *
+ * @method static get($path, $callback, $middleware = [])
+ * @method static post($path, $callback, $middleware = [])
+ * @method static put($path, $callback, $middleware = [])
+ * @method static patch($path, $callback, $middleware = [])
+ * @method static delete($path, $callback, $middleware = [])
+ * @method static trace($path, $callback, $middleware = [])
+ * @method static connect($path, $callback, $middleware = [])
+ * @method static head($path, $callback, $middleware = [])
+ * @method static options($path, $callback, $middleware = [])
+ * @method static any($path, $callback, $middleware = [])
+ *
  * @author  Zou Yiliang
  * @since   1.0
  */
