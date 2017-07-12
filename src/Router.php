@@ -61,7 +61,7 @@ class Router
      * @param array $middleware
      * @return $this
      */
-    public function add($method, $path, $callback, $middleware = array())
+    public function add($method, $path, $callback, $middleware = array(), array $clearMiddleware = array())
     {
         $middleware = (array)$middleware;
         foreach ($this->groupStack as $attribute) {
@@ -70,6 +70,10 @@ class Router
             }
         }
         $middleware = array_unique($middleware);
+
+        if (count($clearMiddleware) > 0) {
+            $middleware = array_diff($middleware, $clearMiddleware);
+        }
 
         $tokens = explode(self::SEPARATOR, str_replace('.', self::SEPARATOR, trim($path, self::SEPARATOR)));
         $this->_add($this->tree, $tokens, $callback, $middleware, array_map('strtoupper', (array)$method));
