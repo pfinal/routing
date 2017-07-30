@@ -5,6 +5,7 @@ namespace PFinal\Routing;
 use PFinal\Pipeline\Pipeline;
 use PFinal\Routing\Exception\MethodNotAllowedException;
 use PFinal\Routing\Exception\ResourceNotFoundException;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -177,12 +178,7 @@ class Router
             }
 
             if (is_array($response)) {
-                if (version_compare(PHP_VERSION, '5.4.0', '>=')) {
-                    $response = json_encode($response, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                }
-                $response = json_encode($response, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
-
-                return new Response($response, 200, array('Content-Type' => 'application/json; charset=UTF-8'));
+                return new JsonResponse($response);
             }
 
             return new Response($response);
