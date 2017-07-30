@@ -167,7 +167,7 @@ class Router
 
         $pipeline = new Pipeline($this->container);
 
-        return $pipeline->send($request)->through($middleware)->then(function (Request $request) use ($callback, $arguments) {
+        $response = $pipeline->send($request)->through($middleware)->then(function (Request $request) use ($callback, $arguments) {
 
             //$this->getArguments php >= 5.4
             $response = call_user_func_array($callback, $this->getArguments($callback, $arguments));
@@ -176,8 +176,23 @@ class Router
                 return $response;
             }
 
+            if (is_array($response)) {
+                if (version_compare(PHP_VERSION, '5.4.0', '>=')) {
+                    $response = json_encode($response, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                }
+                $response = json_encode($response, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+
+                return new Response($response, 200, array('Content-Type' => 'application/json; charset=UTF-8'));
+            }
+
             return new Response($response);
         });
+
+        if ($response instanceof Response) {
+            return $response;
+        }
+
+        return new Response($response);
     }
 
     /**
