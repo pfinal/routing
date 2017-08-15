@@ -64,12 +64,14 @@ class Router
      */
     public function add($method, $path, $callback, $middleware = array(), array $clearMiddleware = array())
     {
-        $middleware = (array)$middleware;
+        $groupStack = array();
         foreach ($this->groupStack as $attribute) {
             if (array_key_exists('middleware', $attribute)) {
-                $middleware = array_merge((array)$attribute['middleware'], $middleware); // groupStack 优先
+                $groupStack = array_merge($groupStack, (array)$attribute['middleware']);
             }
         }
+
+        $middleware = array_merge($groupStack, (array)$middleware); // groupStack 优先
         $middleware = array_unique($middleware);
 
         if (count($clearMiddleware) > 0) {
