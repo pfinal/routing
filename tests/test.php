@@ -59,6 +59,7 @@ var_dump($router);
 //var_dump(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 
 $request = \Symfony\Component\HttpFoundation\Request::create('blog/11/update');
+//$request = \Symfony\Component\HttpFoundation\Request::createFromGlobals();
 
 $response = $router->dispatch($request);
 $response->send();
