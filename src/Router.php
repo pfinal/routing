@@ -79,12 +79,12 @@ class Router
         }
 
         $tokens = explode(self::SEPARATOR, str_replace('.', self::SEPARATOR, trim($path, self::SEPARATOR)));
-        $this->_add($this->tree, $tokens, $callback, $middleware, array_map('strtoupper', (array)$method));
+        $this->_add($this->tree, $tokens, $callback, $middleware, array_map('strtoupper', (array)$method), $path);
         return $this;
     }
 
     // 创建基于URL规则的树, `handler`保存到`#`节点
-    protected function _add(&$node, $tokens, $callback, $middleware, $method)
+    protected function _add(&$node, $tokens, $callback, $middleware, $method, $uri)
     {
         if (!array_key_exists(self::PARAMETER, $node)) {
             $node[self::PARAMETER] = array();
@@ -98,7 +98,7 @@ class Router
         }
 
         if ($token === null) {
-            $node[self::HANDLER] = array('callback' => $callback, 'middleware' => (array)($middleware), 'method' => $method);
+            $node[self::HANDLER] = array('callback' => $callback, 'middleware' => (array)($middleware), 'method' => $method, 'uri' => $uri);
             return;
         }
 
@@ -106,7 +106,7 @@ class Router
             $node[$token] = array();
         }
 
-        $this->_add($node[$token], $tokens, $callback, $middleware, $method);
+        $this->_add($node[$token], $tokens, $callback, $middleware, $method, $uri);
     }
 
     // 根据path查找handler
@@ -156,11 +156,17 @@ class Router
             throw new ResourceNotFoundException('Resource not found');
         }
 
-        // callback、middleware、method、arguments
+        // callback、middleware、method、arguments、uri
         extract($handler);
 
         if (!in_array($request->getMethod(), $method) && !in_array('ANY', $method)) {
             throw new MethodNotAllowedException($method, sprintf('Method not allowed', $request->getMethod()));
+        }
+
+        if (method_exists($request, 'setRouteResolver')) {
+            $request->setRouteResolver(function () use ($handler) {
+                return $handler;
+            });
         }
 
         if (is_string($callback)) {
