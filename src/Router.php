@@ -46,6 +46,11 @@ class Router
     );
 
     /**
+     * @var string the GET variable name for route. For example, 'r'
+     */
+    public $routeVar = null;
+
+    /**
      * Router constructor.
      * @param \PFinal\Container\Container $container
      */
@@ -151,7 +156,13 @@ class Router
      */
     public function dispatch(Request $request)
     {
-        $handler = $this->resolve($request->getPathInfo());
+        if ($this->routeVar === null) {
+            $pathInfo = $request->getPathInfo();
+        } else {
+            $pathInfo = (string)$request->get($this->routeVar, '/');
+        }
+
+        $handler = $this->resolve($pathInfo);
         if ($handler === false) {
             throw new ResourceNotFoundException('Resource not found');
         }
