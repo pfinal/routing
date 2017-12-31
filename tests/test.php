@@ -29,38 +29,38 @@ $router->get('/blog/:name/update', function ($name) {
 });
 
 $router->get('/blog', 'BlogController@index');
-
-class User
-{
-}
-
-class BlogController
-{
-    public function __construct(User $user)
-    {
-        $this->user = $user;
-    }
-
-    public function __invoke($id = 99, $w = 100)
-    {
-        var_dump($id);
-        var_dump($w);
-    }
-
-    public function index()
-    {
-        var_dump($this);
-        return 'blog-index';
-    }
-}
-
-
-var_dump($router);
-//var_dump(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
-
-$request = \Symfony\Component\HttpFoundation\Request::create('blog/11/update');
-//$request = \Symfony\Component\HttpFoundation\Request::createFromGlobals();
-
-$response = $router->dispatch($request);
-$response->send();
+//
+//class User
+//{
+//}
+//
+//class BlogController
+//{
+//    public function __construct(User $user)
+//    {
+//        $this->user = $user;
+//    }
+//
+//    public function __invoke($id = 99, $w = 100)
+//    {
+//        var_dump($id);
+//        var_dump($w);
+//    }
+//
+//    public function index()
+//    {
+//        var_dump($this);
+//        return 'blog-index';
+//    }
+//}
+//
+//
+//var_dump($router);
+////var_dump(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+//
+//$request = \Symfony\Component\HttpFoundation\Request::create('blog/11/update');
+////$request = \Symfony\Component\HttpFoundation\Request::createFromGlobals();
+//
+//$response = $router->dispatch($request);
+//$response->send();
 
