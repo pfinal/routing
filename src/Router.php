@@ -196,6 +196,16 @@ class Router
                 return $response;
             }
 
+            //convert a psr response to symfony response
+            if ($response instanceof \Psr\Http\Message\ResponseInterface) {
+
+                //composer require symfony/psr-http-message-bridge
+                //composer require zendframework/zend-diactoros
+
+                $httpFoundationFactory = new \Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory();
+                return $httpFoundationFactory->createResponse($response);
+            }
+
             if (is_array($response)) {
                 return new JsonResponse($response);
             }
