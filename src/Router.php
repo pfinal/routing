@@ -151,8 +151,21 @@ class Router
     /**
      * 将请求转换为响应
      *
+     * 如果PSR-7 Request，可以使用下面的方法，转化为Symfony Request
+     * composer require symfony/psr-http-message-bridge
+     * composer require zendframework/zend-diactoros
+     *
+     * $httpFoundationFactory = new \Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory();
+     * $request = $httpFoundationFactory->createRequest($psrRequest);
+     *
+     * 返回 symfony response对象，如果需要转化为 PSR-7 Response，可以使用下面的方法
+     * $psr7Factory = new \Symfony\Bridge\PsrHttpMessage\Factory\DiactorosFactory();
+     * $psrResponse = $psr7Factory->createResponse($symfonyResponse);
+     *
+     * http://symfony.com/blog/psr-7-support-in-symfony-is-here
+     *
      * @param Request $request
-     * @return mixed|Response
+     * @return Response
      */
     public function dispatch(Request $request)
     {
