@@ -54,7 +54,7 @@ class Router
      * Router constructor.
      * @param \PFinal\Container\Container $container
      */
-    public function __construct($container)
+    public function __construct($container = null)
     {
         $this->container = $container;
     }
@@ -164,11 +164,17 @@ class Router
      *
      * http://symfony.com/blog/psr-7-support-in-symfony-is-here
      *
-     * @param Request $request
-     * @return Response
+     * @param Request | \Psr\Http\Message\ServerRequestInterface $request
+     * @return Response | \Psr\Http\Message\ResponseInterface
      */
-    public function dispatch(Request $request)
+    public function dispatch($request)
     {
+        $psr7 = $request instanceof \Psr\Http\Message\ServerRequestInterface;
+        if ($psr7) {
+            $httpFoundationFactory = new \Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory();
+            $request = $httpFoundationFactory->createRequest($request);
+        }
+
         if ($this->routeVar === null) {
             $pathInfo = $request->getPathInfo();
         } else {
@@ -226,11 +232,17 @@ class Router
             return new Response($response);
         });
 
-        if ($response instanceof Response) {
-            return $response;
+        if (!($response instanceof Response)) {
+            $response = new Response($response);
         }
 
-        return new Response($response);
+        if ($psr7) {
+            //composer require zendframework/zend-diactoros
+            $psr7Factory = new \Symfony\Bridge\PsrHttpMessage\Factory\DiactorosFactory();
+            $response = $psr7Factory->createResponse($response);
+        }
+
+        return $response;
     }
 
     /**
