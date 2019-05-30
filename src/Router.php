@@ -12,16 +12,16 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * 路由
  *
- * @method get($path, $callback, $middleware = array())
- * @method post($path, $callback, $middleware = array())
- * @method put($path, $callback, $middleware = array())
- * @method patch($path, $callback, $middleware = array())
- * @method delete($path, $callback, $middleware = array())
- * @method trace($path, $callback, $middleware = array())
- * @method connect($path, $callback, $middleware = array())
- * @method head($path, $callback, $middleware = array())
- * @method options($path, $callback, $middleware = array())
- * @method any($path, $callback, $middleware = array())
+ * @method get($path, $callback, $middleware = [])
+ * @method post($path, $callback, $middleware = [])
+ * @method put($path, $callback, $middleware = [])
+ * @method patch($path, $callback, $middleware = [])
+ * @method delete($path, $callback, $middleware = [])
+ * @method trace($path, $callback, $middleware = [])
+ * @method connect($path, $callback, $middleware = [])
+ * @method head($path, $callback, $middleware = [])
+ * @method options($path, $callback, $middleware = [])
+ * @method any($path, $callback, $middleware = [])
  *
  * @author  Zou Yiliang
  * @since   1.0
@@ -103,7 +103,18 @@ class Router
         }
 
         if ($token === null) {
-            $node[self::HANDLER] = array('callback' => $callback, 'middleware' => (array)($middleware), 'method' => $method, 'uri' => $uri);
+
+            $handler = array(
+                'callback' => $callback,
+                'middleware' => (array)($middleware),
+                'method' => $method,
+                'uri' => $uri
+            );
+
+            foreach ($method as $m) {
+                $node[self::HANDLER][$m] = $handler;
+            }
+
             return;
         }
 
@@ -115,25 +126,25 @@ class Router
     }
 
     // 根据path查找handler
-    protected function _resolve($node, $tokens, $params = array())
+    protected function _resolve($node, $tokens, $method, $params = array())
     {
         $token = array_shift($tokens);
 
         if ($token === null && array_key_exists(self::HANDLER, $node)) {
-            return array_merge($node[self::HANDLER], array('arguments' => $params));
+            return $this->findHandler($method, $node[self::HANDLER], $params);
         }
 
         if (array_key_exists($token, $node)) {
-            return $this->_resolve($node[$token], $tokens, $params);
+            return $this->_resolve($node[$token], $tokens, $method, $params);
         }
 
         foreach ($node[self::PARAMETER] as $childToken => $childNode) {
 
             if ($token === null && array_key_exists(self::HANDLER, $childNode)) {
-                return array_merge($childNode[self::HANDLER], array('arguments' => $params));
+                return $this->findHandler($method, $childNode[self::HANDLER], $params);
             }
 
-            $handler = $this->_resolve($childNode, $tokens, array_merge($params, array($childToken => $token)));
+            $handler = $this->_resolve($childNode, $tokens, $method, array_merge($params, array($childToken => $token)));
 
             if ($handler !== false) {
                 return $handler;
@@ -142,10 +153,25 @@ class Router
         return false;
     }
 
-    protected function resolve($path)
+    private function findHandler($method, $handler, $params)
+    {
+        if (array_key_exists($method, $handler)) {
+            return array_merge($handler[$method], array('arguments' => $params));
+        }
+
+        if (array_key_exists('ANY', $handler)) {
+            return array_merge($handler['ANY'], array('arguments' => $params));
+        }
+
+        $allowedMethods = array_keys($handler);
+
+        throw new MethodNotAllowedException($allowedMethods, sprintf('Method not allowed: %s', $method));
+    }
+
+    protected function resolve($path, $method)
     {
         $tokens = explode(self::SEPARATOR, str_replace('.', self::SEPARATOR, trim($path, self::SEPARATOR)));
-        return $this->_resolve($this->tree, $tokens);
+        return $this->_resolve($this->tree, $tokens, $method);
     }
 
     /**
@@ -181,17 +207,17 @@ class Router
             $pathInfo = (string)$request->get($this->routeVar, '/');
         }
 
-        $handler = $this->resolve($pathInfo);
+        $handler = $this->resolve($pathInfo, strtoupper($request->getMethod()));
         if ($handler === false) {
             throw new ResourceNotFoundException('Resource not found');
         }
 
-        // callback、middleware、method、arguments、uri
+        /** @var $callback */
+        /** @var $middleware */
+        /** @var $method */
+        /** @var $arguments */
+        /** @var $uri */
         extract($handler);
-
-        if (!in_array($request->getMethod(), $method) && !in_array('ANY', $method)) {
-            throw new MethodNotAllowedException($method, sprintf('Method not allowed', $request->getMethod()));
-        }
 
         if (method_exists($request, 'setRouteResolver')) {
             $request->setRouteResolver(function () use ($handler) {
@@ -200,16 +226,15 @@ class Router
         }
 
         if (is_string($callback)) {
-            list($class, $method) = explode(self::AT, $callback, 2);
-            $callback = array($this->container->make($class), $method);
+            list($class, $func) = explode(self::AT, $callback, 2);
+            $callback = array($this->container->make($class), $func);
         }
 
         $pipeline = new Pipeline($this->container);
 
         $response = $pipeline->send($request)->through($middleware)->then(function (Request $request) use ($callback, $arguments) {
 
-            //$this->getArguments php >= 5.4
-            $response = call_user_func_array($callback, $this->getArguments($callback, $arguments));
+            $response = call_user_func_array($callback, $this->getArguments($callback, $arguments)); //php >= 5.4
 
             if ($response instanceof Response) {
                 return $response;
@@ -247,9 +272,11 @@ class Router
 
     /**
      * 获取调用参数和值
+     *
      * @param $controller
      * @param $attributes
      * @return array
+     * @throws \ReflectionException
      */
     protected function getArguments($controller, $attributes)
     {
@@ -308,6 +335,12 @@ class Router
         $this->tree = $tree;
     }
 
+    /**
+     * @param $name
+     * @param $args
+     * @return mixed
+     * @throws \Exception
+     */
     public function __call($name, $args)
     {
         if (in_array($name, array('get', 'post', 'put', 'patch', 'delete', 'trace', 'connect', 'options', 'head', 'any'))) {

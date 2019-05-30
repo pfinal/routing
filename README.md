@@ -2,7 +2,7 @@
 
 ## 安装
 
-环境要求：PHP >= 5.4
+环境要求：PHP >= 5.4、7+
 
 * 使用 [composer](https://getcomposer.org/)
 

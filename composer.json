@@ -9,7 +9,7 @@
         }
     ],
     "require": {
-        "php": "^5.3 || ^7.0",
+        "php": "^5.4 || ^7.0",
         "pfinal/pipeline": "~1.1",
         "pfinal/container": "~1.1",
         "psr/http-message": "^1.0",
