@@ -12,16 +12,16 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * 路由
  *
- * @method get($path, $callback, $middleware = [])
- * @method post($path, $callback, $middleware = [])
- * @method put($path, $callback, $middleware = [])
- * @method patch($path, $callback, $middleware = [])
- * @method delete($path, $callback, $middleware = [])
- * @method trace($path, $callback, $middleware = [])
- * @method connect($path, $callback, $middleware = [])
- * @method head($path, $callback, $middleware = [])
- * @method options($path, $callback, $middleware = [])
- * @method any($path, $callback, $middleware = [])
+ * @method get($path, $callback, $middleware = array())
+ * @method post($path, $callback, $middleware = array())
+ * @method put($path, $callback, $middleware = array())
+ * @method patch($path, $callback, $middleware = array())
+ * @method delete($path, $callback, $middleware = array())
+ * @method trace($path, $callback, $middleware = array())
+ * @method connect($path, $callback, $middleware = array())
+ * @method head($path, $callback, $middleware = array())
+ * @method options($path, $callback, $middleware = array())
+ * @method any($path, $callback, $middleware = array())
  *
  * @author  Zou Yiliang
  * @since   1.0

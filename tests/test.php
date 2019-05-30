@@ -1,8 +1,8 @@
 <?php
-//
-//require __DIR__ . '/../vendor/autoload.php';
-//
-//$router = new \PFinal\Routing\Router(new \PFinal\Container\Container());
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$router = new \PFinal\Routing\Router(new \PFinal\Container\Container());
 
 ////Closure
 //$obj = new BlogController();
@@ -29,6 +29,9 @@ $router->get('/blog/:name/update', function ($name) {
 });
 
 $router->get('/blog', 'BlogController@index');
+
+dump($router);
+
 //
 //class User
 //{
