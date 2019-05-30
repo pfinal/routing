@@ -15,7 +15,10 @@ composer require pfinal/routing
 ```php
 require __DIR__ . '/vendor/autoload.php';
 
-$router = new \PFinal\Routing\Router(null);
+use Symfony\Component\HttpFoundation\Request;
+use PFinal\Routing\Router;
+
+$router = new Router();
 
 $router->get('/', function () {
     return 'index';
@@ -29,7 +32,7 @@ $router->post('/blog/:name/update', function ($name) {
     return $name;
 });
 
-$request = \Symfony\Component\HttpFoundation\Request::createFromGlobals();
+$request = Request::createFromGlobals();
 
 $response = $router->dispatch($request);
 $response->send();
