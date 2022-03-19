@@ -293,10 +293,17 @@ class Router
         $arguments = array();
 
         foreach ($parameters as $param) {
+
+            if (PHP_MAJOR_VERSION > 7) {
+                $class = $param->getType();
+            } else {
+                $class = $param->getClass();
+            }
+
             if (array_key_exists($param->name, $attributes)) {
                 $arguments[] = $attributes[$param->name];
-            } elseif ($param->getClass() && $this->container->offsetExists($param->getClass()->name)) {
-                $arguments[] = $this->container[$param->getClass()->name];
+            } elseif ($class && $this->container->offsetExists($class->getName())) {
+                $arguments[] = $this->container[$class->getName()];
             } elseif ($param->isDefaultValueAvailable()) {
                 $arguments[] = $param->getDefaultValue();
             } else {
